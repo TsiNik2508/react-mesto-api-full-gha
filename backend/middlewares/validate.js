@@ -1,9 +1,10 @@
 const { celebrate, Joi } = require('celebrate');
-const { isURL } = require('validator');
+const isUrl = require('validator/lib/isURL');
 const BadRequest = require('../error/BadRequest');
 
 const validateUrl = (url) => {
-  if (isURL(url)) {
+  const validate = isUrl(url);
+  if (validate) {
     return url;
   }
   throw new BadRequest('Некорректный адрес URL');
@@ -50,7 +51,7 @@ const validateID = (id) => {
   if (/^[0-9a-fA-F]{24}$/.test(id)) {
     return id;
   }
-  throw new BadRequest('Передан неклрретный id');
+  throw new BadRequest('Передан некорретный id.');
 };
 
 module.exports.validateUserId = celebrate({

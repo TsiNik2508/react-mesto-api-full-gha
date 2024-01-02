@@ -4,6 +4,8 @@ const userSchema = require('../models/user');
 const BadRequest = require('../error/BadRequest');
 const Conflict = require('../error/Conflict');
 
+const { NODE_ENV, JWT_SECRET } = process.env;
+
 module.exports.createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
@@ -27,7 +29,7 @@ module.exports.createUser = (req, res, next) => {
         if (err.name === 'ValidationError') {
           return next(new BadRequest('На сервере произошла ошибка'));
         }
-        return next(err);
+        next(err);
       });
   })
     .catch(next);
@@ -38,10 +40,10 @@ module.exports.login = (req, res, next) => {
   return userSchema
     .findUserByCredentials(email, password)
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, 'your-secret-key', {
+      const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', {
         expiresIn: '7d',
       });
-      res.send({ token });
+      res.status(200).send({ token });
     })
     .catch(next);
 };

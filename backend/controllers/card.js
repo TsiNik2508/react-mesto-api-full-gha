@@ -6,6 +6,7 @@ const Forbidden = require('../error/Forbidden');
 module.exports.getAllCards = (req, res, next) => {
   cardSchema
     .find({})
+    .populate(['owner', 'likes'])
     .then((cards) => res.status(200).send(cards))
     .catch(next);
 };
@@ -15,7 +16,8 @@ module.exports.createCards = (req, res, next) => {
   const owner = req.user._id;
   cardSchema
     .create({ name, link, owner })
-    .then((card) => res.status(201).send(card))
+    .then((card) => cardSchema.populate(card, ['likes', 'owner'])
+      .then((populatedCard) => res.status(200).send(populatedCard)))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequest('На сервере произошла ошибка'));
@@ -32,14 +34,18 @@ module.exports.likeCard = (req, res, next) => {
       { $addToSet: { likes: req.user._id } },
       { new: true },
     )
+    .populate(['likes', 'owner'])
     .then((card) => {
       if (!card) {
         throw new Status('Запрашиваемая карточка не найдена');
       }
-      res.send({ data: card });
+      res.send(card);
     })
     .catch((err) => {
-      next(err);
+      if (err.name === 'CastError') {
+        return next(new BadRequest('На сервере произошла ошибка'));
+      }
+      return next(err);
     });
 };
 
@@ -50,20 +56,25 @@ module.exports.dislikeCard = (req, res, next) => {
       { $pull: { likes: req.user._id } },
       { new: true },
     )
+    .populate(['likes', 'owner'])
     .then((card) => {
       if (!card) {
         throw new Status('Запрашиваемая карточка не найдена');
       }
-      res.send({ data: card });
+      res.send(card);
     })
     .catch((err) => {
-      next(err);
+      if (err.name === 'CastError') {
+        return next(new BadRequest('На сервере произошла ошибка'));
+      }
+      return next(err);
     });
 };
 
 module.exports.deleteCard = (req, res, next) => {
   const { cardId } = req.params;
   return cardSchema.findById(cardId)
+    .populate(['likes', 'owner'])
     .then((card) => {
       if (!card) {
         throw new Status('Запрашиваемая карточка не найдена');

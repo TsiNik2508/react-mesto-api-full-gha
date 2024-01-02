@@ -16,7 +16,7 @@ module.exports.getUserById = (req, res, next) => {
       if (!user) {
         throw new Status('Запрашиваемый пользователь не найден');
       }
-      res.send({ data: user });
+      res.send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -42,11 +42,9 @@ module.exports.updateProfile = (req, res, next) => {
       res.status(200).send(user);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        next(new BadRequest('Ошибка при обновлении данных'));
-      } else {
-        next(err);
-      }
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
+        next(BadRequest('Ошибка при обновлении данных'));
+      } else next(err);
     });
 };
 
@@ -58,18 +56,11 @@ module.exports.updateAvatar = (req, res, next) => {
       { avatar },
       { new: true, runValidators: true },
     )
-    .then((user) => {
-      if (!user) {
-        throw new Status('Запрашиваемый пользователь не найден');
-      }
-      res.status(200).send(user);
-    })
+    .then((user) => res.status(200).send(user))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
         next(new BadRequest('Ошибка при обновлении аватара'));
-      } else {
-        next(err);
-      }
+      } else next(err);
     });
 };
 
@@ -82,6 +73,10 @@ module.exports.getCurrentUser = (req, res, next) => {
       res.status(200).send(user);
     })
     .catch((err) => {
-      next(err);
+      if (err.name === 'CastError') {
+        next(BadRequest('Переданы некорректные данные'));
+      } else if (err.message === 'NotFound') {
+        next(new Status('Запрашиваемый пользователь не найден'));
+      } else next(err);
     });
 };
