@@ -1,5 +1,5 @@
 const BadRequest = require('../error/BadRequest');
-const Status = require('../error/Status');
+const NotFound = require('../error/NotFound');
 const userSchema = require('../models/user');
 
 module.exports.getAllUsers = (req, res, next) => {
@@ -14,7 +14,7 @@ module.exports.getUserById = (req, res, next) => {
   userSchema.findById(userId)
     .then((user) => {
       if (!user) {
-        throw new Status('Запрашиваемый пользователь не найден');
+        throw new NotFound('Запрашиваемый пользователь не найден');
       }
       res.send(user);
     })
@@ -37,12 +37,12 @@ module.exports.updateProfile = (req, res, next) => {
     )
     .then((user) => {
       if (!user) {
-        throw new Status('Запрашиваемый пользователь не найден');
+        throw new NotFound('Запрашиваемый пользователь не найден');
       }
       res.status(200).send(user);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError' || err.name === 'CastError') {
+      if (err.name === 'ValidationError') {
         next(BadRequest('Ошибка при обновлении данных'));
       } else next(err);
     });
@@ -58,7 +58,7 @@ module.exports.updateAvatar = (req, res, next) => {
     )
     .then((user) => res.status(200).send(user))
     .catch((err) => {
-      if (err.name === 'ValidationError' || err.name === 'CastError') {
+      if (err.name === 'ValidationError') {
         next(new BadRequest('Ошибка при обновлении аватара'));
       } else next(err);
     });
@@ -68,15 +68,13 @@ module.exports.getCurrentUser = (req, res, next) => {
   userSchema.findById(req.user._id)
     .then((user) => {
       if (!user) {
-        throw new Status('Пользователь не найден');
+        throw new NotFound('Пользователь не найден');
       }
       res.status(200).send(user);
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
-        next(BadRequest('Переданы некорректные данные'));
-      } else if (err.message === 'NotFound') {
-        next(new Status('Запрашиваемый пользователь не найден'));
+      if (err.message === 'NotFound') {
+        next(err);
       } else next(err);
     });
 };

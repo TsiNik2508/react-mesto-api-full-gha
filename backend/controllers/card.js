@@ -1,5 +1,5 @@
 const cardSchema = require('../models/card');
-const Status = require('../error/Status');
+const NotFound = require('../error/NotFound');
 const BadRequest = require('../error/BadRequest');
 const Forbidden = require('../error/Forbidden');
 
@@ -37,7 +37,7 @@ module.exports.likeCard = (req, res, next) => {
     .populate(['likes', 'owner'])
     .then((card) => {
       if (!card) {
-        throw new Status('Запрашиваемая карточка не найдена');
+        throw new NotFound('Запрашиваемая карточка не найдена');
       }
       res.send(card);
     })
@@ -59,7 +59,7 @@ module.exports.dislikeCard = (req, res, next) => {
     .populate(['likes', 'owner'])
     .then((card) => {
       if (!card) {
-        throw new Status('Запрашиваемая карточка не найдена');
+        throw new NotFound('Запрашиваемая карточка не найдена');
       }
       res.send(card);
     })
@@ -77,7 +77,7 @@ module.exports.deleteCard = (req, res, next) => {
     .populate(['likes', 'owner'])
     .then((card) => {
       if (!card) {
-        throw new Status('Запрашиваемая карточка не найдена');
+        throw new NotFound('Запрашиваемая карточка не найдена');
       }
       if (!card.owner.equals(req.user._id)) {
         return next(new Forbidden('Недостаточно прав для удаления карточки'));
