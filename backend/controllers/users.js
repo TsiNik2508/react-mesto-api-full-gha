@@ -73,8 +73,6 @@ module.exports.getCurrentUser = (req, res, next) => {
       res.status(200).send(user);
     })
     .catch((err) => {
-      if (err.message === 'NotFound') {
-        next(err);
-      }
+      next(err);
     });
 };
